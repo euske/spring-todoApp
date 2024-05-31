@@ -1,0 +1,2 @@
+TRUNCATE TABLE todos;
+INSERT INTO todos VALUES (1, 'foo');
