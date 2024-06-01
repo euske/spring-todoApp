@@ -71,4 +71,19 @@ class TodoAppApplicationTests(@Autowired val restTemplate: TestRestTemplate, @Lo
 		// 配列 todos2 には "hello" をもつTodoオブジェクトが含まれている。
 		assertThat(todos2.map { todo: Todo -> todo.text }, hasItem("hello"))
 	}
+
+	@Test
+	fun `POSTリクエストは新しいTodoオブジェクトのidを返す`() {
+		// localhost/todos に POSTリクエストを投げる。このときのボディは {"text": "hello"}
+		val request = TodoRequest("hello")
+		val response1 = restTemplate.postForEntity("http://localhost:$port/todos", request, Number::class.java)
+		val id = response1.body!!
+
+		// ふたたび localhost/todos に GETリクエストを投げ、レスポンスを Todoオブジェクトの配列として解釈する。
+		val response2 = restTemplate.getForEntity("http://localhost:$port/todos", Array<Todo>::class.java)
+		// このときのレスポンスを todos として記憶。
+		val todos = response2.body!!
+		// 配列 todos2 には "hello" をもつTodoオブジェクトが含まれている。
+		assertThat(todos.find { todo: Todo -> todo.id == id }!!.text, equalTo("hello"))
+	}
 }

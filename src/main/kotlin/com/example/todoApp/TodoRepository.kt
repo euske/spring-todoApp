@@ -2,8 +2,10 @@ package com.example.todoApp
 
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.RowMapper
+import org.springframework.jdbc.core.simple.SimpleJdbcInsert
 import org.springframework.stereotype.Repository
 import java.sql.ResultSet
+import javax.sql.DataSource
 
 class TodoRowMapper : RowMapper<Todo> {
     override fun mapRow(rs: ResultSet, rowNum: Int): Todo {
@@ -12,7 +14,7 @@ class TodoRowMapper : RowMapper<Todo> {
 }
 
 @Repository
-class TodoRepository(val jdbcTemplate: JdbcTemplate) {
+class TodoRepository(val jdbcTemplate: JdbcTemplate, val dataSource: DataSource) {
 
     val todoRowMapper = TodoRowMapper()
 
@@ -20,7 +22,9 @@ class TodoRepository(val jdbcTemplate: JdbcTemplate) {
         return jdbcTemplate.query("SELECT id, text FROM todos", todoRowMapper)
     }
 
-    fun saveTodo(todoRequest: TodoRequest) {
-        jdbcTemplate.update("INSERT INTO todos (text) VALUES (?)", todoRequest.text)
+    fun saveTodo(todoRequest: TodoRequest): Number {
+        val simpleJdbcInsert = SimpleJdbcInsert(dataSource).withTableName("todos").usingGeneratedKeyColumns("id")
+        val parameters = mapOf("text" to todoRequest.text)
+        return simpleJdbcInsert.executeAndReturnKey(parameters)
     }
 }
