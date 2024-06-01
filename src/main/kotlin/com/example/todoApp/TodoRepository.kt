@@ -9,7 +9,7 @@ import javax.sql.DataSource
 
 class TodoRowMapper : RowMapper<Todo> {
     override fun mapRow(rs: ResultSet, rowNum: Int): Todo {
-        return Todo(rs.getInt(1), rs.getString(2))
+        return Todo(rs.getLong(1), rs.getString(2))
     }
 }
 
@@ -22,9 +22,9 @@ class TodoRepository(val jdbcTemplate: JdbcTemplate, val dataSource: DataSource)
         return jdbcTemplate.query("SELECT id, text FROM todos", todoRowMapper)
     }
 
-    fun saveTodo(todoRequest: TodoRequest): Number {
+    fun saveTodo(todoRequest: TodoRequest): Long {
         val simpleJdbcInsert = SimpleJdbcInsert(dataSource).withTableName("todos").usingGeneratedKeyColumns("id")
         val parameters = mapOf("text" to todoRequest.text)
-        return simpleJdbcInsert.executeAndReturnKey(parameters)
+        return simpleJdbcInsert.executeAndReturnKey(parameters).toLong()
     }
 }

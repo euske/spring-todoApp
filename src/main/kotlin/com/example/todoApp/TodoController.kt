@@ -14,7 +14,7 @@ class TodoController(val todoRepository: TodoRepository) {
     }
 
     @PostMapping("/todos")
-    fun postTodo(@RequestBody todoRequest: TodoRequest): Number {
+    fun postTodo(@RequestBody todoRequest: TodoRequest): Long {
         return todoRepository.saveTodo(todoRequest)
     }
 

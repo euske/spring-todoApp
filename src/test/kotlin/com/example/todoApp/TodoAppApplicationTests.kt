@@ -76,7 +76,7 @@ class TodoAppApplicationTests(@Autowired val restTemplate: TestRestTemplate, @Lo
 	fun `POSTリクエストは新しいTodoオブジェクトのidを返す`() {
 		// localhost/todos に POSTリクエストを投げる。このときのボディは {"text": "hello"}
 		val request = TodoRequest("hello")
-		val response1 = restTemplate.postForEntity("http://localhost:$port/todos", request, Number::class.java)
+		val response1 = restTemplate.postForEntity("http://localhost:$port/todos", request, Long::class.java)
 		val id = response1.body!!
 
 		// ふたたび localhost/todos に GETリクエストを投げ、レスポンスを Todoオブジェクトの配列として解釈する。
