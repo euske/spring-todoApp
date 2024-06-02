@@ -5,7 +5,6 @@ import org.springframework.jdbc.core.RowMapper
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert
 import org.springframework.stereotype.Repository
 import java.sql.ResultSet
-import javax.sql.DataSource
 
 class TodoRowMapper : RowMapper<Todo> {
     override fun mapRow(rs: ResultSet, rowNum: Int): Todo {
@@ -14,7 +13,7 @@ class TodoRowMapper : RowMapper<Todo> {
 }
 
 @Repository
-class TodoRepository(val jdbcTemplate: JdbcTemplate, val dataSource: DataSource) {
+class TodoRepository(val jdbcTemplate: JdbcTemplate) {
 
     val todoRowMapper = TodoRowMapper()
 
@@ -22,8 +21,17 @@ class TodoRepository(val jdbcTemplate: JdbcTemplate, val dataSource: DataSource)
         return jdbcTemplate.query("SELECT id, text FROM todos", todoRowMapper)
     }
 
+    fun getTodo(id: Long): Todo? {
+        val todos = jdbcTemplate.query("SELECT id, text FROM todos WHERE id=?", todoRowMapper, id)
+        if (todos.isEmpty()) {
+            return null
+        } else {
+            return todos[0]
+        }
+    }
+
     fun saveTodo(todoRequest: TodoRequest): Long {
-        val simpleJdbcInsert = SimpleJdbcInsert(dataSource).withTableName("todos").usingGeneratedKeyColumns("id")
+        val simpleJdbcInsert = SimpleJdbcInsert(jdbcTemplate).withTableName("todos").usingGeneratedKeyColumns("id")
         val parameters = mapOf("text" to todoRequest.text)
         return simpleJdbcInsert.executeAndReturnKey(parameters).toLong()
     }

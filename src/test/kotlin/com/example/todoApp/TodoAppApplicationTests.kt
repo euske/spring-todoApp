@@ -13,6 +13,7 @@ import org.springframework.test.context.jdbc.Sql
 import org.springframework.web.client.*
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@Sql("/insert_test_data.sql")
 class TodoAppApplicationTests(@Autowired val restTemplate: TestRestTemplate, @LocalServerPort val port: Int) {
 
 	@Test
@@ -30,16 +31,18 @@ class TodoAppApplicationTests(@Autowired val restTemplate: TestRestTemplate, @Lo
 	}
 
 	@Test
-	@Sql("/insert_test_data.sql")
 	fun `GETリクエストはTodoオブジェクトのリストを返す`() {
 		// localhost/todos に GETリクエストを投げ、レスポンスを Todoオブジェクトの配列として解釈する。
 		val response = restTemplate.getForEntity("http://localhost:$port/todos", Array<Todo>::class.java)
-		// 配列は1つの要素をもつこと。
+		// 配列は2つの要素をもつこと。
 		val todos = response.body!!
-		assertThat(todos.size, equalTo(1))
+		assertThat(todos.size, equalTo(2))
 		// 最初の要素は id=1 であり、text が "foo" であること。
 		assertThat(todos[0].id, equalTo(1))
 		assertThat(todos[0].text, equalTo("foo"))
+		// 次の要素は id=2 であり、text が "bar" であること。
+		assertThat(todos[1].id, equalTo(2))
+		assertThat(todos[1].text, equalTo("bar"))
 	}
 
 	@Test
@@ -85,5 +88,24 @@ class TodoAppApplicationTests(@Autowired val restTemplate: TestRestTemplate, @Lo
 		val todos = response2.body!!
 		// 配列 todos2 には "hello" をもつTodoオブジェクトが含まれている。
 		assertThat(todos.find { todo: Todo -> todo.id == id }!!.text, equalTo("hello"))
+	}
+
+	@Test
+	fun `GETリクエストはひとつのTodoオブジェクトを返す`() {
+		// localhost/todos に GETリクエストを投げ、レスポンスを Todoオブジェクトとして解釈する。
+		val id = 2L
+		val response = restTemplate.getForEntity("http://localhost:$port/todos/$id", Todo::class.java)
+		val todo = response.body!!
+		// id=2 の Todoオブジェクトが取得されている。
+		assertThat(todo.id, equalTo(id))
+		assertThat(todo.text, equalTo("bar"))
+	}
+
+	@Test
+	fun `GETリクエストは存在しないIDに対してNot Foundを返す`() {
+		// localhost/todos に GETリクエストを投げ、レスポンスを Todoオブジェクトとして解釈する。
+		val id = 999L
+		val response = restTemplate.getForEntity("http://localhost:$port/todos/$id", Todo::class.java)
+		assertThat(response.statusCode, equalTo(HttpStatus.NOT_FOUND))
 	}
 }
