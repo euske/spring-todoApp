@@ -7,9 +7,9 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.client.TestRestTemplate
 import org.springframework.boot.test.web.server.LocalServerPort
-import org.springframework.http.HttpStatus
-import org.springframework.http.MediaType
+import org.springframework.http.*
 import org.springframework.test.context.jdbc.Sql
+import org.springframework.util.LinkedMultiValueMap
 import org.springframework.web.client.*
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -80,6 +80,25 @@ class TodoAppApplicationTests(@Autowired val restTemplate: TestRestTemplate, @Lo
 		// localhost/todos に POSTリクエストを送る。このときのボディは {"text": "hello"}
 		val request = TodoRequest("hello")
 		val response1 = restTemplate.postForEntity("http://localhost:$port/todos", request, Long::class.java)
+		// そのとき返されたidを記憶しておく。
+		val id = response1.body!!
+
+		// ふたたび localhost/todos に GETリクエストを送り、レスポンスを Todoオブジェクトの配列として解釈する。
+		val response2 = restTemplate.getForEntity("http://localhost:$port/todos", Array<Todo>::class.java)
+		// このときのレスポンスを todos として記憶。
+		val todos = response2.body!!
+		// 配列 todos には返された id をもつTodoオブジェクトが含まれており、そのテキストは hello。
+		assertThat(todos.find { todo: Todo -> todo.id == id }!!.text, equalTo("hello"))
+	}
+
+	@Test
+	fun `POSTリクエストはwww-form-urlencoded型のリクエストも受け付ける`() {
+		// localhost/todos に POSTリクエストを送る。このときのボディは text=hello
+		val headers = HttpHeaders()
+		headers.contentType = MediaType.APPLICATION_FORM_URLENCODED
+		val params = LinkedMultiValueMap<String, String>()
+		params.add("text", "hello")
+		val response1 = restTemplate.exchange("http://localhost:$port/todos", HttpMethod.POST, HttpEntity(params, headers), Long::class.java)
 		// そのとき返されたidを記憶しておく。
 		val id = response1.body!!
 
