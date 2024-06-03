@@ -1,11 +1,14 @@
 package com.example.todoApp
 
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.RowMapper
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert
+import org.springframework.stereotype.Component
 import org.springframework.stereotype.Repository
 import java.sql.ResultSet
 
+@Component
 class TodoRowMapper : RowMapper<Todo> {
     override fun mapRow(rs: ResultSet, rowNum: Int): Todo {
         return Todo(rs.getLong(1), rs.getString(2))
@@ -13,9 +16,10 @@ class TodoRowMapper : RowMapper<Todo> {
 }
 
 @Repository
-class TodoRepository(val jdbcTemplate: JdbcTemplate) {
-
-    val todoRowMapper = TodoRowMapper()
+class TodoRepository(
+    @Autowired val jdbcTemplate: JdbcTemplate,
+    @Autowired val todoRowMapper: TodoRowMapper
+) {
 
     fun getTodos(): List<Todo> {
         return jdbcTemplate.query("SELECT id, text FROM todos", todoRowMapper)
