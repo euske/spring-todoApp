@@ -35,4 +35,8 @@ class TodoRepository(val jdbcTemplate: JdbcTemplate) {
         val parameters = mapOf("text" to todoRequest.text)
         return simpleJdbcInsert.executeAndReturnKey(parameters).toLong()
     }
+
+    fun deleteTodo(id: Long) {
+        jdbcTemplate.update("DELETE FROM todos WHERE id=?", id)
+    }
 }

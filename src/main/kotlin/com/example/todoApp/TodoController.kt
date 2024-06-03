@@ -1,6 +1,7 @@
 package com.example.todoApp
 
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -28,6 +29,11 @@ class TodoController(val todoRepository: TodoRepository) {
     @PostMapping("/todos")
     fun postTodo(@RequestBody todoRequest: TodoRequest): Long {
         return todoRepository.saveTodo(todoRequest)
+    }
+
+    @DeleteMapping("/todos/{id}")
+    fun deleteTodo(@PathVariable id: Long) {
+        todoRepository.deleteTodo(id)
     }
 
 }

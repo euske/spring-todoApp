@@ -80,13 +80,14 @@ class TodoAppApplicationTests(@Autowired val restTemplate: TestRestTemplate, @Lo
 		// localhost/todos に POSTリクエストを投げる。このときのボディは {"text": "hello"}
 		val request = TodoRequest("hello")
 		val response1 = restTemplate.postForEntity("http://localhost:$port/todos", request, Long::class.java)
+		// そのとき返されたidを記憶しておく。
 		val id = response1.body!!
 
 		// ふたたび localhost/todos に GETリクエストを投げ、レスポンスを Todoオブジェクトの配列として解釈する。
 		val response2 = restTemplate.getForEntity("http://localhost:$port/todos", Array<Todo>::class.java)
 		// このときのレスポンスを todos として記憶。
 		val todos = response2.body!!
-		// 配列 todos2 には "hello" をもつTodoオブジェクトが含まれている。
+		// 配列 todos には返された id をもつTodoオブジェクトが含まれており、そのテキストは hello。
 		assertThat(todos.find { todo: Todo -> todo.id == id }!!.text, equalTo("hello"))
 	}
 
@@ -107,5 +108,24 @@ class TodoAppApplicationTests(@Autowired val restTemplate: TestRestTemplate, @Lo
 		val id = 999L
 		val response = restTemplate.getForEntity("http://localhost:$port/todos/$id", Todo::class.java)
 		assertThat(response.statusCode, equalTo(HttpStatus.NOT_FOUND))
+	}
+
+	@Test
+	fun `DELETEリクエストはTodoオブジェクトを削除する`() {
+		// localhost/todos に POSTリクエストを投げる。このときのボディは {"text": "hello"}
+		val request = TodoRequest("hello")
+		val response1 = restTemplate.postForEntity("http://localhost:$port/todos", request, Long::class.java)
+		// そのとき返されたidを記憶しておく。
+		val id = response1.body!!
+
+		// localhost/todos にその id の DELETEリクエストを送る。
+		restTemplate.delete("http://localhost:$port/todos/$id")
+
+		// ふたたび localhost/todos に GETリクエストを投げ、レスポンスを Todoオブジェクトの配列として解釈する。
+		val response2 = restTemplate.getForEntity("http://localhost:$port/todos", Array<Todo>::class.java)
+		// このときのレスポンスを todos として記憶。
+		val todos = response2.body!!
+		// 配列 todos にはその id をもつオブジェクトは含まれていない。
+		assertThat(todos.find { todo: Todo -> todo.id == id }, nullValue())
 	}
 }
