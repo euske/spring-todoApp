@@ -23,17 +23,17 @@ class TodoAppApplicationTests(@Autowired val restTemplate: TestRestTemplate, @Lo
 	@Test
 	fun `GETリクエストはOKステータスを返す`() {
 		// localhost/todos に GETリクエストを送る。
-		val response = restTemplate.getForEntity("http://localhost:$port/todos", Any::class.java)
+		val response = restTemplate.getForEntity("http://localhost:$port/todos", String::class.java)
 		// レスポンスのステータスコードは OK であること。
 		assertThat(response.statusCode, equalTo(HttpStatus.OK))
-		// レスポンスの Content-Type は application/json であること。
-		assertThat(response.headers.contentType, equalTo(MediaType.APPLICATION_JSON))
 	}
 
 	@Test
 	fun `GETリクエストはTodoオブジェクトのリストを返す`() {
 		// localhost/todos に GETリクエストを送り、レスポンスを Todoオブジェクトの配列として解釈する。
 		val response = restTemplate.getForEntity("http://localhost:$port/todos", Array<Todo>::class.java)
+		// レスポンスの Content-Type は application/json であること。
+		assertThat(response.headers.contentType, equalTo(MediaType.APPLICATION_JSON))
 		// 配列は2つの要素をもつこと。
 		val todos = response.body!!
 		assertThat(todos.size, equalTo(2))
@@ -49,7 +49,7 @@ class TodoAppApplicationTests(@Autowired val restTemplate: TestRestTemplate, @Lo
 	fun `POSTリクエストはOKステータスを返す`() {
 		// localhost/todos に POSTリクエストを送る。このときのボディは {"text": "hello"}
 		val request = TodoRequest("hello")
-		val response = restTemplate.postForEntity("http://localhost:$port/todos", request, Any::class.java)
+		val response = restTemplate.postForEntity("http://localhost:$port/todos", request, String::class.java)
 		// レスポンスのステータスコードは OK であること。
 		assertThat(response.statusCode, equalTo(HttpStatus.OK))
 	}
@@ -63,7 +63,7 @@ class TodoAppApplicationTests(@Autowired val restTemplate: TestRestTemplate, @Lo
 
 		// localhost/todos に POSTリクエストを送る。このときのボディは {"text": "hello"}
 		val request = TodoRequest("hello")
-		restTemplate.postForEntity("http://localhost:$port/todos", request, Any::class.java)
+		restTemplate.postForEntity("http://localhost:$port/todos", request, String::class.java)
 
 		// ふたたび localhost/todos に GETリクエストを送り、レスポンスを Todoオブジェクトの配列として解釈する。
 		val response2 = restTemplate.getForEntity("http://localhost:$port/todos", Array<Todo>::class.java)
