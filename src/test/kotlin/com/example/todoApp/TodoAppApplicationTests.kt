@@ -2,10 +2,9 @@ package com.example.todoApp
 
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.*
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.boot.test.web.client.TestRestTemplate
 import org.springframework.boot.test.web.server.LocalServerPort
 import org.springframework.http.*
 import org.springframework.test.context.jdbc.Sql
@@ -14,7 +13,9 @@ import org.springframework.web.client.*
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Sql("/insert_test_data.sql")
-class TodoAppApplicationTests(@Autowired val restTemplate: TestRestTemplate, @LocalServerPort val port: Int) {
+class TodoAppApplicationTests(@LocalServerPort val port: Int) {
+
+	val restClient = RestClient.create()
 
 	@Test
 	fun contextLoads() {
@@ -23,7 +24,7 @@ class TodoAppApplicationTests(@Autowired val restTemplate: TestRestTemplate, @Lo
 	@Test
 	fun `GETリクエストはOKステータスを返す`() {
 		// localhost/todos に GETリクエストを送る。
-		val response = restTemplate.getForEntity("http://localhost:$port/todos", String::class.java)
+		val response = restClient.get().uri("http://localhost:$port/todos").retrieve().toEntity<String>()
 		// レスポンスのステータスコードは OK であること。
 		assertThat(response.statusCode, equalTo(HttpStatus.OK))
 	}
@@ -31,7 +32,7 @@ class TodoAppApplicationTests(@Autowired val restTemplate: TestRestTemplate, @Lo
 	@Test
 	fun `GETリクエストはTodoオブジェクトのリストを返す`() {
 		// localhost/todos に GETリクエストを送り、レスポンスを Todoオブジェクトの配列として解釈する。
-		val response = restTemplate.getForEntity("http://localhost:$port/todos", Array<Todo>::class.java)
+		val response = restClient.get().uri("http://localhost:$port/todos").retrieve().toEntity<Array<Todo>>()
 		// レスポンスの Content-Type は application/json であること。
 		assertThat(response.headers.contentType, equalTo(MediaType.APPLICATION_JSON))
 		// 配列は2つの要素をもつこと。
@@ -49,7 +50,7 @@ class TodoAppApplicationTests(@Autowired val restTemplate: TestRestTemplate, @Lo
 	fun `POSTリクエストはOKステータスを返す`() {
 		// localhost/todos に POSTリクエストを送る。このときのボディは {"text": "hello"}
 		val request = TodoRequest("hello")
-		val response = restTemplate.postForEntity("http://localhost:$port/todos", request, String::class.java)
+		val response = restClient.post().uri("http://localhost:$port/todos").body(request).retrieve().toEntity<String>()
 		// レスポンスのステータスコードは OK であること。
 		assertThat(response.statusCode, equalTo(HttpStatus.OK))
 	}
@@ -57,16 +58,16 @@ class TodoAppApplicationTests(@Autowired val restTemplate: TestRestTemplate, @Lo
 	@Test
 	fun `POSTリクエストはTodoオブジェクトを格納する`() {
 		// localhost/todos に GETリクエストを送り、レスポンスを Todoオブジェクトの配列として解釈する。
-		val response1 = restTemplate.getForEntity("http://localhost:$port/todos", Array<Todo>::class.java)
+		val response1 = restClient.get().uri("http://localhost:$port/todos").retrieve().toEntity<Array<Todo>>()
 		// このときのレスポンスを todos1 として記憶。
 		val todos1 = response1.body!!
 
 		// localhost/todos に POSTリクエストを送る。このときのボディは {"text": "hello"}
 		val request = TodoRequest("hello")
-		restTemplate.postForEntity("http://localhost:$port/todos", request, String::class.java)
+		restClient.post().uri("http://localhost:$port/todos").body(request).retrieve().toEntity<String>()
 
 		// ふたたび localhost/todos に GETリクエストを送り、レスポンスを Todoオブジェクトの配列として解釈する。
-		val response2 = restTemplate.getForEntity("http://localhost:$port/todos", Array<Todo>::class.java)
+		val response2 = restClient.get().uri("http://localhost:$port/todos").retrieve().toEntity<Array<Todo>>()
 		// このときのレスポンスを todos2 として記憶。
 		val todos2 = response2.body!!
 		// 配列 todos2 は、配列 todos1 よりも 1 要素だけ多い。
@@ -79,12 +80,12 @@ class TodoAppApplicationTests(@Autowired val restTemplate: TestRestTemplate, @Lo
 	fun `POSTリクエストは新しいTodoオブジェクトのidを返す`() {
 		// localhost/todos に POSTリクエストを送る。このときのボディは {"text": "hello"}
 		val request = TodoRequest("hello")
-		val response1 = restTemplate.postForEntity("http://localhost:$port/todos", request, Long::class.java)
+		val response1 = restClient.post().uri("http://localhost:$port/todos").body(request).retrieve().toEntity<Long>()
 		// そのとき返されたidを記憶しておく。
 		val id = response1.body!!
 
 		// ふたたび localhost/todos に GETリクエストを送り、レスポンスを Todoオブジェクトの配列として解釈する。
-		val response2 = restTemplate.getForEntity("http://localhost:$port/todos", Array<Todo>::class.java)
+		val response2 = restClient.get().uri("http://localhost:$port/todos").retrieve().toEntity<Array<Todo>>()
 		// このときのレスポンスを todos として記憶。
 		val todos = response2.body!!
 		// 配列 todos には返された id をもつTodoオブジェクトが含まれており、そのテキストは hello。
@@ -94,16 +95,13 @@ class TodoAppApplicationTests(@Autowired val restTemplate: TestRestTemplate, @Lo
 	@Test
 	fun `POSTリクエストはwww-form-urlencoded型のリクエストも受け付ける`() {
 		// localhost/todos に POSTリクエストを送る。このときのボディは text=hello
-		val headers = HttpHeaders()
-		headers.contentType = MediaType.APPLICATION_FORM_URLENCODED
-		val params = LinkedMultiValueMap<String, String>()
-		params.add("text", "hello")
-		val response1 = restTemplate.exchange("http://localhost:$port/todos", HttpMethod.POST, HttpEntity(params, headers), Long::class.java)
+		val params = LinkedMultiValueMap(mapOf("text" to listOf("hello")))
+		val response1 = restClient.post().uri("http://localhost:$port/todos").contentType(MediaType.APPLICATION_FORM_URLENCODED).body(params).retrieve().toEntity<Long>()
 		// そのとき返されたidを記憶しておく。
 		val id = response1.body!!
 
 		// ふたたび localhost/todos に GETリクエストを送り、レスポンスを Todoオブジェクトの配列として解釈する。
-		val response2 = restTemplate.getForEntity("http://localhost:$port/todos", Array<Todo>::class.java)
+		val response2 = restClient.get().uri("http://localhost:$port/todos").retrieve().toEntity<Array<Todo>>()
 		// このときのレスポンスを todos として記憶。
 		val todos = response2.body!!
 		// 配列 todos には返された id をもつTodoオブジェクトが含まれており、そのテキストは hello。
@@ -114,7 +112,7 @@ class TodoAppApplicationTests(@Autowired val restTemplate: TestRestTemplate, @Lo
 	fun `GETリクエストはひとつのTodoオブジェクトを返す`() {
 		// localhost/todos に GETリクエストを送り、レスポンスを Todoオブジェクトとして解釈する。
 		val id = 2L
-		val response = restTemplate.getForEntity("http://localhost:$port/todos/$id", Todo::class.java)
+		val response = restClient.get().uri("http://localhost:$port/todos/$id").retrieve().toEntity<Todo>()
 		val todo = response.body!!
 		// id=2 の Todoオブジェクトが取得されている。
 		assertThat(todo.id, equalTo(id))
@@ -125,23 +123,25 @@ class TodoAppApplicationTests(@Autowired val restTemplate: TestRestTemplate, @Lo
 	fun `GETリクエストは存在しないIDに対してNot Foundを返す`() {
 		// localhost/todos に GETリクエストを送り、レスポンスを Todoオブジェクトとして解釈する。
 		val id = 999L
-		val response = restTemplate.getForEntity("http://localhost:$port/todos/$id", Todo::class.java)
-		assertThat(response.statusCode, equalTo(HttpStatus.NOT_FOUND))
+		assertThrows(
+			HttpClientErrorException.NotFound::class.java,
+			{ restClient.get().uri("http://localhost:$port/todos/$id").retrieve().toBodilessEntity() }
+		)
 	}
 
 	@Test
 	fun `DELETEリクエストはTodoオブジェクトを削除する`() {
 		// localhost/todos に POSTリクエストを送る。このときのボディは {"text": "hello"}
 		val request = TodoRequest("hello")
-		val response1 = restTemplate.postForEntity("http://localhost:$port/todos", request, Long::class.java)
+		val response1 = restClient.post().uri("http://localhost:$port/todos").body(request).retrieve().toEntity<Long>()
 		// そのとき返されたidを記憶しておく。
 		val id = response1.body!!
 
 		// localhost/todos にその id の DELETEリクエストを送る。
-		restTemplate.delete("http://localhost:$port/todos/$id")
+		restClient.delete().uri("http://localhost:$port/todos/$id").retrieve().toBodilessEntity()
 
 		// ふたたび localhost/todos に GETリクエストを送り、レスポンスを Todoオブジェクトの配列として解釈する。
-		val response2 = restTemplate.getForEntity("http://localhost:$port/todos", Array<Todo>::class.java)
+		val response2 = restClient.get().uri("http://localhost:$port/todos").retrieve().toEntity<Array<Todo>>()
 		// このときのレスポンスを todos として記憶。
 		val todos = response2.body!!
 		// 配列 todos にはその id をもつオブジェクトは含まれていない。
