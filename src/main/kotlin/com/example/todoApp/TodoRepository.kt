@@ -1,9 +1,9 @@
 package com.example.todoApp
 
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.RowMapper
-import org.springframework.jdbc.core.simple.SimpleJdbcInsert
+import org.springframework.jdbc.core.simple.JdbcClient
+import org.springframework.jdbc.support.GeneratedKeyHolder
 import org.springframework.stereotype.Component
 import org.springframework.stereotype.Repository
 import java.sql.ResultSet
@@ -17,16 +17,16 @@ class TodoRowMapper : RowMapper<Todo> {
 
 @Repository
 class TodoRepository(
-    @Autowired val jdbcTemplate: JdbcTemplate,
+    @Autowired val jdbcClient: JdbcClient,
     @Autowired val todoRowMapper: TodoRowMapper
 ) {
 
     fun getTodos(): List<Todo> {
-        return jdbcTemplate.query("SELECT id, text FROM todos", todoRowMapper)
+        return jdbcClient.sql("SELECT id, text FROM todos").query(todoRowMapper).list()
     }
 
     fun getTodo(id: Long): Todo? {
-        val todos = jdbcTemplate.query("SELECT id, text FROM todos WHERE id=?", todoRowMapper, id)
+        val todos = jdbcClient.sql("SELECT id, text FROM todos WHERE id=?").param(id).query(todoRowMapper).list()
         if (todos.isEmpty()) {
             return null
         } else {
@@ -35,12 +35,13 @@ class TodoRepository(
     }
 
     fun saveTodo(todoRequest: TodoRequest): Long {
-        val simpleJdbcInsert = SimpleJdbcInsert(jdbcTemplate).withTableName("todos").usingGeneratedKeyColumns("id")
-        val parameters = mapOf("text" to todoRequest.text)
-        return simpleJdbcInsert.executeAndReturnKey(parameters).toLong()
+        val keyHolder = GeneratedKeyHolder()
+        jdbcClient.sql("INSERT INTO todos (text) VALUES (?)").param(todoRequest.text).update(keyHolder, "id")
+        val newId = keyHolder.key!!.toLong()
+        return newId
     }
 
     fun deleteTodo(id: Long) {
-        jdbcTemplate.update("DELETE FROM todos WHERE id=?", id)
+        jdbcClient.sql("DELETE FROM todos WHERE id=?").param(id).update()
     }
 }
