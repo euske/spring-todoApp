@@ -26,7 +26,7 @@ class TodoRepository(
     }
 
     fun getTodo(id: Long): Todo? {
-        val todos = jdbcClient.sql("SELECT id, text FROM todos WHERE id=?").param(id).query(todoRowMapper).list()
+        val todos = jdbcClient.sql("SELECT id, text FROM todos WHERE id=:id").param("id", id).query(todoRowMapper).list()
         if (todos.isEmpty()) {
             return null
         } else {
@@ -36,12 +36,12 @@ class TodoRepository(
 
     fun saveTodo(todoRequest: TodoRequest): Long {
         val keyHolder = GeneratedKeyHolder()
-        jdbcClient.sql("INSERT INTO todos (text) VALUES (?)").param(todoRequest.text).update(keyHolder, "id")
+        jdbcClient.sql("INSERT INTO todos (text) VALUES (:text)").param("text", todoRequest.text).update(keyHolder, "id")
         val newId = keyHolder.key!!.toLong()
         return newId
     }
 
     fun deleteTodo(id: Long) {
-        jdbcClient.sql("DELETE FROM todos WHERE id=?").param(id).update()
+        jdbcClient.sql("DELETE FROM todos WHERE id=:id").param("id", id).update()
     }
 }
