@@ -38,12 +38,8 @@ class TodoAppApplicationTests(@LocalServerPort val port: Int) {
 		// 配列は2つの要素をもつこと。
 		val todos = response.body!!
 		assertThat(todos.size, equalTo(2))
-		// 最初の要素は id=1 であり、text が "foo" であること。
-		assertThat(todos[0].id, equalTo(1))
-		assertThat(todos[0].text, equalTo("foo"))
-		// 次の要素は id=2 であり、text が "bar" であること。
-		assertThat(todos[1].id, equalTo(2))
-		assertThat(todos[1].text, equalTo("bar"))
+		// 各要素のtextが "foo", "bar" (順不同) であること。
+		assertThat(todos.map { todo: Todo -> todo.text }, containsInAnyOrder("foo", "bar"))
 	}
 
 	@Test

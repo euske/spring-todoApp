@@ -1,3 +1,3 @@
 TRUNCATE TABLE todos;
-INSERT INTO todos VALUES (1, 'foo');
-INSERT INTO todos VALUES (2, 'bar');
+INSERT INTO todos (text) VALUES ('foo');
+INSERT INTO todos (text) VALUES ('bar');
