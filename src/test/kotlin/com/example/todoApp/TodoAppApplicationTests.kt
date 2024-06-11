@@ -12,7 +12,7 @@ import org.springframework.util.LinkedMultiValueMap
 import org.springframework.web.client.*
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Sql("/insert_test_data.sql")
+@Sql("classpath:/insert_test_data.sql")
 class TodoAppApplicationTests(@LocalServerPort val port: Int) {
 
 	val restClient = RestClient.create()
