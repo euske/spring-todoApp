@@ -5,6 +5,12 @@ spring:
     url: jdbc:postgresql://localhost/tododb
     username: postgres
     password: postgres
+  cloud:
+    aws:
+      endpoint: http://localhost:4566
+      credentials:
+        access-key: xxx
+        secret-key: yyy
 
 ---
 spring:
