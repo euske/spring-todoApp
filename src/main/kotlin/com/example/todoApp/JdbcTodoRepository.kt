@@ -7,11 +7,12 @@ import org.springframework.jdbc.support.GeneratedKeyHolder
 import org.springframework.stereotype.Component
 import org.springframework.stereotype.Repository
 import java.sql.ResultSet
+import java.util.UUID
 
 @Component
 class TodoRowMapper : RowMapper<Todo> {
     override fun mapRow(rs: ResultSet, rowNum: Int): Todo {
-        return Todo(rs.getLong(1), rs.getString(2))
+        return Todo(rs.getObject(1, UUID::class.java), rs.getString(2))
     }
 }
 
@@ -25,7 +26,7 @@ class JdbcTodoRepository (
         return jdbcClient.sql("SELECT id, text FROM todos").query(todoRowMapper).list()
     }
 
-    override fun getTodo(id: Long): Todo? {
+    override fun getTodo(id: UUID): Todo? {
         val todos = jdbcClient.sql("SELECT id, text FROM todos WHERE id=:id").param("id", id).query(todoRowMapper).list()
         if (todos.isEmpty()) {
             return null
@@ -34,14 +35,14 @@ class JdbcTodoRepository (
         }
     }
 
-    override fun saveTodo(todoRequest: TodoRequest): Long {
+    override fun saveTodo(todoRequest: TodoRequest): UUID {
         val keyHolder = GeneratedKeyHolder()
         jdbcClient.sql("INSERT INTO todos (text) VALUES (:text)").param("text", todoRequest.text).update(keyHolder, "id")
-        val newId = keyHolder.key!!.toLong()
-        return newId
+        val newId = keyHolder.getKeyAs(UUID::class.java)
+        return newId!!
     }
 
-    override fun deleteTodo(id: Long) {
+    override fun deleteTodo(id: UUID) {
         jdbcClient.sql("DELETE FROM todos WHERE id=:id").param("id", id).update()
     }
 }

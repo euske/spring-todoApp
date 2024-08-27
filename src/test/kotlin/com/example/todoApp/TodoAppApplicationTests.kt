@@ -11,12 +11,14 @@ import org.springframework.test.context.jdbc.Sql
 import org.springframework.util.LinkedMultiValueMap
 import org.springframework.web.client.*
 import java.net.URI
+import java.util.UUID
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Sql("classpath:/insert_test_data.sql")
 class TodoAppApplicationTests(@LocalServerPort val port: Int) {
 
 	val restClient = RestClient.create()
+	val todoId1: UUID = UUID.fromString("75C431BF-E5EC-4253-8D96-E9BB2C6CAF8E")
 
 	@Test
 	fun contextLoads() {
@@ -80,7 +82,7 @@ class TodoAppApplicationTests(@LocalServerPort val port: Int) {
 		val response1 = restClient.post().uri("http://localhost:$port/todos").body(request).retrieve().toBodilessEntity()
 		// そのとき返されたidを記憶しておく。
 		val location = URI(response1.headers.getFirst(HttpHeaders.LOCATION)!!)
-		val id: Long = location.path.split("/").last().toLong()
+		val id: UUID = UUID.fromString(location.path.split("/").last())
 
 		// ふたたび localhost/todos に GETリクエストを送り、レスポンスを Todoオブジェクトの配列として解釈する。
 		val response2 = restClient.get().uri("http://localhost:$port/todos").retrieve().toEntity<Array<Todo>>()
@@ -97,7 +99,7 @@ class TodoAppApplicationTests(@LocalServerPort val port: Int) {
 		val response1 = restClient.post().uri("http://localhost:$port/todos").contentType(MediaType.APPLICATION_FORM_URLENCODED).body(params).retrieve().toBodilessEntity()
 		// そのとき返されたidを記憶しておく。
 		val location = URI(response1.headers.getFirst(HttpHeaders.LOCATION)!!)
-		val id: Long = location.path.split("/").last().toLong()
+		val id: UUID = UUID.fromString(location.path.split("/").last())
 
 		// ふたたび localhost/todos に GETリクエストを送り、レスポンスを Todoオブジェクトの配列として解釈する。
 		val response2 = restClient.get().uri("http://localhost:$port/todos").retrieve().toEntity<Array<Todo>>()
@@ -108,20 +110,27 @@ class TodoAppApplicationTests(@LocalServerPort val port: Int) {
 	}
 
 	@Test
+	fun `GETリクエストは単一のオブジェクトに対してOKステータスを返す`() {
+		// localhost/todos に GETリクエストを送る。
+		val response = restClient.get().uri("http://localhost:$port/todos/$todoId1").retrieve().toEntity<Todo>()
+		// レスポンスのステータスコードは OK であること。
+		assertThat(response.statusCode, equalTo(HttpStatus.OK))
+	}
+
+	@Test
 	fun `GETリクエストはひとつのTodoオブジェクトを返す`() {
 		// localhost/todos に GETリクエストを送り、レスポンスを Todoオブジェクトとして解釈する。
-		val id = 2L
-		val response = restClient.get().uri("http://localhost:$port/todos/$id").retrieve().toEntity<Todo>()
+		val response = restClient.get().uri("http://localhost:$port/todos/$todoId1").retrieve().toEntity<Todo>()
 		val todo = response.body!!
 		// id=2 の Todoオブジェクトが取得されている。
-		assertThat(todo.id, equalTo(id))
+		assertThat(todo.id, equalTo(todoId1))
 		assertThat(todo.text, equalTo("bar"))
 	}
 
 	@Test
 	fun `GETリクエストは存在しないIDに対してNot Foundを返す`() {
 		// localhost/todos に GETリクエストを送り、レスポンスを Todoオブジェクトとして解釈する。
-		val id = 999L
+		val id = UUID.randomUUID()
 		assertThrows(
 			HttpClientErrorException.NotFound::class.java,
 			{ restClient.get().uri("http://localhost:$port/todos/$id").retrieve().toBodilessEntity() }
@@ -135,7 +144,7 @@ class TodoAppApplicationTests(@LocalServerPort val port: Int) {
 		val response1 = restClient.post().uri("http://localhost:$port/todos").body(request).retrieve().toBodilessEntity()
 		// そのとき返されたlocationを記憶しておく。
 		val location = URI(response1.headers.getFirst(HttpHeaders.LOCATION)!!)
-		val id: Long = location.path.split("/").last().toLong()
+		val id: UUID = UUID.fromString(location.path.split("/").last())
 
 		// localhost/todos にその id の DELETEリクエストを送る。
 		restClient.delete().uri(location).retrieve().toBodilessEntity()

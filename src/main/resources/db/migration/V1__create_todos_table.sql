@@ -1,4 +1,5 @@
 CREATE TABLE todos (
-    id SERIAL PRIMARY KEY,
-    text TEXT
+    id UUID DEFAULT gen_random_uuid(),
+    text TEXT,
+    PRIMARY KEY(id)
 );

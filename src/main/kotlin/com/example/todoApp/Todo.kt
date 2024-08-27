@@ -1,3 +1,5 @@
 package com.example.todoApp
 
-data class Todo(val id: Long, val text: String)
+import java.util.UUID
+
+data class Todo(val id: UUID, val text: String)

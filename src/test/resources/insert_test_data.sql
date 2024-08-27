@@ -1,3 +1,3 @@
 TRUNCATE TABLE todos;
-INSERT INTO todos (text) VALUES ('foo');
-INSERT INTO todos (text) VALUES ('bar');
+INSERT INTO todos (id, text) VALUES ('E3220B97-3BE6-40B0-B814-9EBCAB06C7FE', 'foo');
+INSERT INTO todos (id, text) VALUES ('75C431BF-E5EC-4253-8D96-E9BB2C6CAF8E', 'bar');

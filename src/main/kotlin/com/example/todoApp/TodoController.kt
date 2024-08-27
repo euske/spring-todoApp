@@ -5,6 +5,7 @@ import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
+import java.util.UUID
 
 @RestController
 class TodoController(val todoRepository: TodoRepository) {
@@ -15,7 +16,7 @@ class TodoController(val todoRepository: TodoRepository) {
     }
 
     @GetMapping("/todos/{id}")
-    fun getTodo(@PathVariable id: Long): ResponseEntity<Todo> {
+    fun getTodo(@PathVariable id: UUID): ResponseEntity<Todo> {
         val todo = todoRepository.getTodo(id)
         if (todo == null) {
             return ResponseEntity.notFound().build()
@@ -46,7 +47,7 @@ class TodoController(val todoRepository: TodoRepository) {
 
     @DeleteMapping("/todos/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    fun deleteTodo(@PathVariable id: Long) {
+    fun deleteTodo(@PathVariable id: UUID) {
         todoRepository.deleteTodo(id)
     }
 
