@@ -1,6 +1,7 @@
 package com.example.todoApp
 
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.annotation.Profile
 import org.springframework.jdbc.core.RowMapper
 import org.springframework.jdbc.core.simple.JdbcClient
 import org.springframework.jdbc.support.GeneratedKeyHolder
@@ -17,6 +18,7 @@ class TodoRowMapper : RowMapper<Todo> {
 }
 
 @Repository
+@Profile("jdbc")
 class JdbcTodoRepository (
     @Autowired val jdbcClient: JdbcClient,
     @Autowired val todoRowMapper: TodoRowMapper

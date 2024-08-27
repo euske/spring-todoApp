@@ -1,19 +1,47 @@
 package com.example.todoApp
 
+import io.awspring.cloud.dynamodb.DynamoDbTemplate
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.*
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.boot.test.web.server.LocalServerPort
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Import
 import org.springframework.http.*
+import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.jdbc.Sql
 import org.springframework.util.LinkedMultiValueMap
 import org.springframework.web.client.*
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient
+import software.amazon.awssdk.enhanced.dynamodb.TableSchema
+import software.amazon.awssdk.services.dynamodb.model.ResourceNotFoundException
 import java.net.URI
 import java.util.UUID
 
+
+@TestConfiguration
+class TodoAppApplicationTestsConfiguration {
+	@Bean
+	fun dynamoDBTodoRepository(
+		dynamoDbEnhancedClient: DynamoDbEnhancedClient,
+		dynamoDbTemplate: DynamoDbTemplate
+	): DynamoDBTodoRepository {
+		val dynamoDbTable = dynamoDbEnhancedClient.table("todo_dynamo_entity", TableSchema.fromBean(TodoDynamoEntity::class.java))
+		try {
+			dynamoDbTable.deleteTable()
+		} catch (e: ResourceNotFoundException) {
+		}
+		dynamoDbTable.createTable()
+		return DynamoDBTodoRepository(dynamoDbEnhancedClient, dynamoDbTemplate)
+	}
+}
+
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@ActiveProfiles(profiles = ["test", "dynamo"])
+@Import(TodoAppApplicationTestsConfiguration::class)
 @Sql("classpath:/insert_test_data.sql")
 class TodoAppApplicationTests(@LocalServerPort val port: Int) {
 

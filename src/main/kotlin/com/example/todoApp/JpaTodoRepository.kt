@@ -6,6 +6,7 @@ import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.annotation.Profile
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
 import java.util.UUID
@@ -25,7 +26,8 @@ interface JpaTodoRepositoryBase : JpaRepository<TodoJpaEntity, UUID> {
 
 }
 
-//@Repository
+@Repository
+@Profile("jpa")
 class JpaTodoRepositoryImpl(
     @Autowired val todoRepositoryBase: JpaTodoRepositoryBase
 ) : TodoRepository {
