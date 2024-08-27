@@ -35,7 +35,7 @@ class TodoAppApplicationTestsConfiguration {
 		} catch (e: ResourceNotFoundException) {
 		}
 		dynamoDbTable.createTable()
-		return DynamoDBTodoRepository(dynamoDbEnhancedClient, dynamoDbTemplate)
+		return DynamoDBTodoRepository(dynamoDbTemplate)
 	}
 }
 
