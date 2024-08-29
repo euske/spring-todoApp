@@ -5,14 +5,18 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Repository
 import software.amazon.awssdk.enhanced.dynamodb.Key
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbAttribute
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey
 import java.util.UUID
 
 @DynamoDbBean
-class TodoDynamoEntity(
+data class TodoDynamoEntity(
     @get:DynamoDbPartitionKey
+    @get:DynamoDbAttribute("Id")
     var id: UUID = UUID.randomUUID(),
+
+    @get:DynamoDbAttribute("Text")
     var text: String = ""
 )
 
@@ -28,8 +32,7 @@ class DynamoDBTodoRepository(
     }
 
     override fun getTodo(id: UUID): Todo? {
-        val key = Key.builder().partitionValue(id.toString()).build()
-        val todo = dynamoDbTemplate.load(key, TodoDynamoEntity::class.java)
+        val todo = dynamoDbTemplate.load(getKeyFor(id), TodoDynamoEntity::class.java)
         return if (todo == null) null else Todo(id, todo.text)
     }
 
@@ -40,7 +43,10 @@ class DynamoDBTodoRepository(
     }
 
     override fun deleteTodo(id: UUID) {
-        dynamoDbTemplate.delete(id)
+        dynamoDbTemplate.delete(getKeyFor(id), TodoDynamoEntity::class.java)
     }
 
+    private fun getKeyFor(id: UUID): Key {
+        return Key.builder().partitionValue(id.toString()).build()
+    }
 }

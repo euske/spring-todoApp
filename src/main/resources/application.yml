@@ -8,6 +8,8 @@ spring:
   cloud:
     aws:
       endpoint: http://localhost:4566
+      region:
+        static: ap-northeast-1
       credentials:
         access-key: xxx
         secret-key: yyy

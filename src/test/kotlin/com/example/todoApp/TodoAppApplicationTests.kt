@@ -15,9 +15,6 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.jdbc.Sql
 import org.springframework.util.LinkedMultiValueMap
 import org.springframework.web.client.*
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient
-import software.amazon.awssdk.enhanced.dynamodb.TableSchema
-import software.amazon.awssdk.services.dynamodb.model.ResourceNotFoundException
 import java.net.URI
 import java.util.UUID
 
@@ -26,15 +23,8 @@ import java.util.UUID
 class TodoAppApplicationTestsConfiguration {
 	@Bean
 	fun dynamoDBTodoRepository(
-		dynamoDbEnhancedClient: DynamoDbEnhancedClient,
 		dynamoDbTemplate: DynamoDbTemplate
 	): DynamoDBTodoRepository {
-		val dynamoDbTable = dynamoDbEnhancedClient.table("todo_dynamo_entity", TableSchema.fromBean(TodoDynamoEntity::class.java))
-		try {
-			dynamoDbTable.deleteTable()
-		} catch (e: ResourceNotFoundException) {
-		}
-		dynamoDbTable.createTable()
 		return DynamoDBTodoRepository(dynamoDbTemplate)
 	}
 }
