@@ -1,15 +1,13 @@
 spring:
-  datasource:
-    url: jdbc:h2:mem:testdb;MODE=PostgreSQL;
-    username: sa
-    password:
+  docker:
+    compose:
+      skip:
+        in-tests: false
   cloud:
     aws:
-      endpoint: http://localhost:4566
       credentials:
         access-key: xxx
         secret-key: yyy
-
 logging:
   level:
     org.springframework.web: DEBUG

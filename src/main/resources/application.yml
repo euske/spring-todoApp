@@ -19,10 +19,7 @@ spring:
   config:
     activate:
       on-profile: local
-  datasource:
-    url: jdbc:h2:mem:testdb;MODE=PostgreSQL;
-    username: sa
-    password:
-  h2:
-    console:
+  docker:
+    compose:
       enabled: true
+      file: docker-compose.yml

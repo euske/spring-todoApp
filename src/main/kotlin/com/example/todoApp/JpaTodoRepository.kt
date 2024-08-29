@@ -22,9 +22,7 @@ class TodoJpaEntity(
 )
 
 @Repository
-interface JpaTodoRepositoryBase : JpaRepository<TodoJpaEntity, UUID> {
-
-}
+interface JpaTodoRepositoryBase : JpaRepository<TodoJpaEntity, UUID>
 
 @Repository
 @Profile("jpa")

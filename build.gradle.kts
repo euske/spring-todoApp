@@ -28,6 +28,7 @@ dependencies {
 	implementation("org.flywaydb:flyway-database-postgresql")
 	implementation("io.awspring.cloud:spring-cloud-aws-dependencies:3.0.2")
 	implementation("io.awspring.cloud:spring-cloud-aws-starter-dynamodb:3.0.2")
+	implementation("org.springframework.boot:spring-boot-docker-compose")
 	runtimeOnly("com.h2database:h2")
 	runtimeOnly("org.postgresql:postgresql")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
