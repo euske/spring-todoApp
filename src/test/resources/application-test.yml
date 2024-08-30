@@ -8,3 +8,4 @@ logging:
   level:
     org.springframework.web: DEBUG
     org.springframework.jdbc.core: DEBUG
+    org.hibernate.orm.jdbc.bind: TRACE

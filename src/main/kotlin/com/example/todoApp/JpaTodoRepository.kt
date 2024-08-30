@@ -41,8 +41,7 @@ class JpaTodoRepositoryImpl(
     }
 
     override fun saveTodo(todoRequest: TodoRequest): UUID {
-        val todo = TodoJpaEntity(text=todoRequest.text)
-        todoRepositoryBase.save(todo)
+        val todo = todoRepositoryBase.save(TodoJpaEntity(text=todoRequest.text))
         return todo.id
     }
 
