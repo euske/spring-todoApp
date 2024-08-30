@@ -4,20 +4,76 @@ import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.*
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
+import org.slf4j.LoggerFactory
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.boot.test.web.server.LocalServerPort
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Primary
 import org.springframework.http.*
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.jdbc.Sql
 import org.springframework.util.LinkedMultiValueMap
 import org.springframework.web.client.*
+import org.testcontainers.containers.BindMode
+import org.testcontainers.containers.localstack.LocalStackContainer
+import org.testcontainers.containers.localstack.LocalStackContainer.Service
+import org.testcontainers.containers.output.Slf4jLogConsumer
+import org.testcontainers.junit.jupiter.Container
+import org.testcontainers.junit.jupiter.Testcontainers
+import org.testcontainers.utility.DockerImageName
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
+import software.amazon.awssdk.regions.Region
+import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import java.net.URI
+import java.nio.file.Paths
 import java.util.UUID
+import kotlin.io.path.absolutePathString
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles(profiles = ["test", "dynamo"])
+@Testcontainers
 @Sql("classpath:/insert_test_data.sql")
 class TodoAppApplicationTests(@LocalServerPort val port: Int) {
+
+	companion object {
+		private val localstackImage = DockerImageName.parse("localstack/localstack")
+		private val initDir = Paths.get("./scripts/localstack").normalize().absolutePathString()
+
+		@Container
+		val localstack: LocalStackContainer = LocalStackContainer(localstackImage)
+			.withServices(Service.DYNAMODB)
+			.withFileSystemBind(initDir, "/etc/localstack/init/ready.d", BindMode.READ_ONLY)
+			.withLogConsumer(Slf4jLogConsumer(LoggerFactory.getLogger("localstack")))
+			.withEnv("DEFAULT_REGION", "ap-northeast-1")
+	}
+
+	@TestConfiguration
+	class DynamoDBTestConfig() {
+
+		@Bean
+		@Primary
+		fun createDynamoDbClient(): DynamoDbClient {
+			return DynamoDbClient
+				.builder()
+				.endpointOverride(
+					localstack.endpoint
+				)
+				.region(
+					Region.of(localstack.region)
+				)
+				.credentialsProvider(
+					StaticCredentialsProvider.create(
+						AwsBasicCredentials.create(
+							localstack.accessKey,
+							localstack.secretKey
+						)
+					)
+				)
+				.build()
+		}
+	}
 
 	val restClient = RestClient.create()
 	val todoId1: UUID = UUID.fromString("75C431BF-E5EC-4253-8D96-E9BB2C6CAF8E")
