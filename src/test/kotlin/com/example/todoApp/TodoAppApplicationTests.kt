@@ -10,6 +10,7 @@ import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.boot.test.web.server.LocalServerPort
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Primary
+import org.springframework.context.annotation.Profile
 import org.springframework.http.*
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.jdbc.Sql
@@ -50,6 +51,7 @@ class TodoAppApplicationTests(@LocalServerPort val port: Int) {
 	}
 
 	@TestConfiguration
+	@Profile("dynamo")
 	class DynamoDBTestConfig() {
 
 		@Bean
