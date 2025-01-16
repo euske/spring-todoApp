@@ -12,7 +12,7 @@ services:
 
   localstack:
     container_name: localstack
-    image: localstack/localstack
+    image: localstack/localstack:latest-amd64
     ports:
       - "4566:4566"
     volumes:
